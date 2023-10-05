@@ -1,0 +1,8 @@
+{
+  "main": "main.php",
+  "output": "bin/certbot-online.phar",
+  "metadata": {
+    "name": "certbot-online"
+  },
+  "git-tag": "git_tag"
+}

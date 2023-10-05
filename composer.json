@@ -1,0 +1,35 @@
+{
+  "name": "pouncetech/certbot-online",
+  "description": "A CLI tool acting as a wrapper around certbot to generate certificates using DNS-01 with a custom setup script that calls Online.net APIs",
+  "authors": [
+    {
+      "name": "NaeiKinDus",
+      "homepage": "https://github.com/naeikindus",
+      "role": "Developer"
+    }
+  ],
+  "keywords": [
+    "acme",
+    "challenge",
+    "dns",
+    "certbot",
+    "phar",
+    "online.net"
+  ],
+  "require": {
+    "php": "^8.2",
+    "ext-json": "*",
+    "ext-phar": "*",
+    "symfony/console": "^6.3",
+    "symfony/http-client": "^6.3",
+    "symfony/dotenv": "^6.3"
+  },
+  "require-dev": {
+    "roave/security-advisories": "dev-latest"
+  },
+  "autoload": {
+    "psr-4": {
+      "PounceTech\\": "src/"
+    }
+  }
+}

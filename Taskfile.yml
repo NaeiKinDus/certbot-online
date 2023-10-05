@@ -1,0 +1,62 @@
+version: '3'
+
+dotenv:
+  - .env
+
+vars:
+  BOX_VERSION: 4.3.8
+  CERTBOT_BIN: '${CERTBOT_BIN}'
+  INSTALL_DIR: /usr/local/bin
+  TARGET_FILENAME: certbot-online.phar
+
+tasks:
+  clean:
+    desc: clean build files and vendors
+    cmds:
+      - 'rm -f bin/{{.TARGET_FILENAME}}'
+      - rm -rf vendor
+
+  setup:
+    desc: locally install project dependencies (box, composer)
+    env:
+      BOX_VERSION: '{{.BOX_VERSION}}'
+    cmds:
+      - ./scripts/install_box.sh
+      - ./scripts/install_composer.sh
+    status:
+      - test -x ./bin/box.phar
+      - test -x ./bin/composer.phar
+
+  build:
+    desc: generate the phar file
+    cmds:
+      - ./bin/composer.phar install --no-dev
+      - ./bin/box.phar compile
+    status:
+      - test -d vendor
+      - 'test -x bin/{{.TARGET_FILENAME}}'
+
+  install:
+    cmds:
+      - task: build
+      - 'install --owner=root --group=root -mode=655 bin/{{.TARGET_FILENAME}} {{.INSTALL_DIR}}'
+    status:
+      - test -x {{.INSTALL_DIR}}/{{.TARGET_FILENAME}}
+
+  test:certbot:
+    desc: execute a test certificate renew
+    cmds:
+      - '{{.CERTBOT_BIN}} certonly -n --manual --manual-auth-hook ./main.php --manual-cleanup-hook ./main.php
+        --agree-tos --email test@${CERTBOT_DOMAIN}
+        --dry-run --preferred-challenges=dns --config-dir=/tmp --work-dir=/tmp --logs-dir=/tmp
+        -d $CERTBOT_DOMAIN'
+
+  test:script:
+    desc: execute a test certificate renew
+    cmds:
+      - ./main.php
+      - echo "switching to deletion mode in 3s..."
+      - sleep 3
+      - CERTBOT_AUTH_OUTPUT= ./main.php
+    env:
+      CERTBOT_VALIDATION: somerandomstringorisit
