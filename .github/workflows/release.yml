@@ -1,0 +1,45 @@
+name: Release Phar command
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build PHAR binary
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+      - name: Setup environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          ini-values: phar.readonly=0
+      - name: Install composer dependencies
+        uses: ramsey/composer-install@v2
+      - name: Build Phar binary
+        run: |
+          ./scripts/install_box.sh
+          ./bin/box.phar compile
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: certbot-online
+          path: ./bin/certbot-online.phar
+
+  publish:
+    runs-on: ubuntu-latest
+    name: Publish PHAR binary
+    needs: [build]
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Retrieve artefact
+        uses: actions/download-artifact@v3
+        with:
+          name: certbot-online
+          path: .
+      - name: Upload PHAR to the release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: certbot-online
