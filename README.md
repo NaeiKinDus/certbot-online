@@ -1,3 +1,6 @@
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg?style=for-the-badge)](CODE_OF_CONDUCT.md)
+[![License](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](LICENSE)
+
 Online Certbot Hook
 ===================
 A hook to help automatically renew Let's Encrypt certificates using the DNS-01 challenge
