@@ -4,5 +4,9 @@
   "metadata": {
     "name": "certbot-online"
   },
-  "git-tag": "git_tag"
+  "git": "git_version",
+  "replacements": {
+    "app_description": "A certbot hook generating DNS TXT challenge records using Online.net API",
+    "app_name": "certbot-online"
+  }
 }
