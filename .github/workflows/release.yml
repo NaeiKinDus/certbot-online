@@ -2,7 +2,7 @@ name: Release Phar command
 
 on:
   push:
-    branches: [test-gh-actions]
+    branches: [main]
 
 jobs:
   build:
@@ -32,6 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Publish PHAR binary
     needs: [build]
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Retrieve artefact
         uses: actions/download-artifact@v3
