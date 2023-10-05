@@ -18,6 +18,10 @@ jobs:
           ini-values: phar.readonly=0
       - name: Install composer dependencies
         uses: ramsey/composer-install@v2
+      - name: Modify version metadata if releasing a tagged asset
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          sed 's/"git-commit-short"/"git"/' box.json.dist > box.json
       - name: Build Phar binary
         run: |
           ./scripts/install_box.sh
