@@ -26,7 +26,12 @@ class CommandProcess
         'CERTBOT_DOMAIN',
         'CERTBOT_VALIDATION',
     ];
+    public const ADDITIONAL_ENV = [
+        'CERTBOT_AUTH_OUTPUT',
+        'CHALLENGE_TTL'
+    ];
     public const CHALLENGE_RECORD_NAME = '_acme-challenge';
+    protected array $loadedEnv = [];
 
     protected SymfonyStyle $ioStyle;
 
@@ -41,23 +46,46 @@ class CommandProcess
     ) {
         $this->ioStyle = new SymfonyStyle($this->input, $this->output);
 
+
         $dotenv = new Dotenv();
-        try {
-            $dotenvFile = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '.env';
-            if (file_exists($dotenvFile)) {
-                $dotenv->load($dotenvFile);
-            }
-        } catch (PathException) {
+        $dotenv->usePutenv();
+        $currentDir = __DIR__;
+        if (str_starts_with($currentDir, 'phar://')) {
+            $currentDir = dirname(substr($currentDir, 7, stripos($currentDir, '.phar') - 2));
         }
 
-        foreach (self::CERTBOT_ENV as $item ) {
-            if (!isset($_ENV[$item])) {
-                throw new \RuntimeException('Missing required environment variable: ' . $item);
+        // Look for .env files in user's home, then in the upper dir (typical dev environment layout),
+        // then in current dir (typical prod environment) and finally in current working directory.
+        $dotenvFiles = [
+            (getenv('HOME', true) ?: getenv('HOME')) . DIRECTORY_SEPARATOR . '.env',
+            $currentDir . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '.env',
+            $currentDir . DIRECTORY_SEPARATOR . '.env',
+            getcwd() . DIRECTORY_SEPARATOR . '.env'
+        ];
+        foreach ($dotenvFiles as $dotenvFile) {
+            if (file_exists($dotenvFile)) {
+                try {
+                    $dotenv->load($dotenvFile);
+                } catch (PathException) {
+                }
             }
         }
-        if (empty($_ENV[self::API_ENV_NAME])) {
+
+        foreach (self::CERTBOT_ENV as $item) {
+            $value = getenv($item, true) ?: getenv($item);
+            if (empty($value)) {
+                throw new \RuntimeException('Missing required environment variable: ' . $item);
+            }
+            $this->loadedEnv[$item] = $value;
+        }
+        foreach (self::ADDITIONAL_ENV as $item) {
+            $this->loadedEnv[$item] = getenv($item, true) ?: getenv($item);
+        }
+        $token = getenv(self::API_ENV_NAME, true) ?: getenv(self::API_ENV_NAME);
+        if (empty($token)) {
             throw new \RuntimeException('Missing required environment variable: ' . self::API_ENV_NAME);
         }
+        $this->loadedEnv[self::API_ENV_NAME] = $token;
     }
 
     /**
@@ -71,25 +99,25 @@ class CommandProcess
      */
     public function process(): int
     {
-        $client = OnlineClient::getInstance($_ENV[self::API_ENV_NAME]);
+        $client = OnlineClient::getInstance($this->loadedEnv[self::API_ENV_NAME]);
         $record = new ResourceRecord();
         $record->name = self::CHALLENGE_RECORD_NAME;
         $record->type = 'TXT';
-        $record->ttl = (int)($_ENV['CHALLENGE_TTL'] ?? self::DEFAULT_TTL);
-        $record->data = $_ENV['CERTBOT_VALIDATION'];
+        $record->ttl = (int)($this->loadedEnv['CHALLENGE_TTL'] ?? self::DEFAULT_TTL);
+        $record->data = $this->loadedEnv['CERTBOT_VALIDATION'];
 
-        if (!isset($_ENV['CERTBOT_AUTH_OUTPUT'])) { // hook called to create the challenge RR
+        if (!isset($this->loadedEnv['CERTBOT_AUTH_OUTPUT'])) { // hook called to create the challenge RR
             try {
-                $client->addRecord($_ENV['CERTBOT_DOMAIN'], $record);
+                $client->addRecord($this->loadedEnv['CERTBOT_DOMAIN'], $record);
             } catch (\Exception $exception) {
-                $this->ioStyle->getErrorStyle()->error("Failed creating challenge record for domain {$_ENV['CERTBOT_DOMAIN']}. Error: {$exception->getMessage()}");
+                $this->ioStyle->getErrorStyle()->error("Failed creating challenge record for domain {$this->loadedEnv['CERTBOT_DOMAIN']}. Error: {$exception->getMessage()}");
                 return 1;
             }
         } else { // hook called to perform a cleanup
             try {
-                $client->deleteRecord($_ENV['CERTBOT_DOMAIN'], $record);
+                $client->deleteRecord($this->loadedEnv['CERTBOT_DOMAIN'], $record);
             } catch (\Exception $exception) {
-                $this->ioStyle->getErrorStyle()->error("Failed performing cleanup for domain {$_ENV['CERTBOT_DOMAIN']}. Error: {$exception->getMessage()}");
+                $this->ioStyle->getErrorStyle()->error("Failed performing cleanup for domain {$this->loadedEnv['CERTBOT_DOMAIN']}. Error: {$exception->getMessage()}");
                 return 2;
             }
         }
