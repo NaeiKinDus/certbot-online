@@ -31,7 +31,7 @@ tasks:
     desc: generate the phar file
     cmds:
       - ./bin/composer.phar install --no-dev
-      - ./bin/box.phar compile
+      - ./bin/box.phar compile --composer-bin ./bin/composer.phar
     status:
       - test -d vendor
       - 'test -x bin/{{.TARGET_FILENAME}}'
@@ -44,7 +44,7 @@ tasks:
       - test -x {{.INSTALL_DIR}}/{{.TARGET_FILENAME}}
 
   test:certbot:
-    desc: execute a test certificate renew
+    desc: execute a dry-run certificate renew using certbot
     cmds:
       - '{{.CERTBOT_BIN}} certonly -n --manual --manual-auth-hook ./main.php --manual-cleanup-hook ./main.php
         --agree-tos --email test@${CERTBOT_DOMAIN}
@@ -52,7 +52,7 @@ tasks:
         -d $CERTBOT_DOMAIN'
 
   test:script:
-    desc: execute a test certificate renew
+    desc: test the hook without certbot, in simulated conditions
     cmds:
       - ./main.php
       - echo "switching to deletion mode in 3s..."
