@@ -107,9 +107,10 @@ class CommandProcess
         $record->ttl = (int)($this->loadedEnv['CHALLENGE_TTL'] ?? self::DEFAULT_TTL);
         $record->data = $this->loadedEnv['CERTBOT_VALIDATION'];
 
-        if (!isset($this->loadedEnv['CERTBOT_AUTH_OUTPUT'])) { // hook called to create the challenge RR
+        if (empty($this->loadedEnv['CERTBOT_AUTH_OUTPUT'])) { // hook called to create the challenge RR
             try {
                 $client->addRecord($this->loadedEnv['CERTBOT_DOMAIN'], $record);
+                $this->ioStyle->writeln("STATUS=auth-ok");
             } catch (\Exception $exception) {
                 $this->ioStyle->getErrorStyle()->error("Failed creating challenge record for domain {$this->loadedEnv['CERTBOT_DOMAIN']}. Error: {$exception->getMessage()}");
                 $this->dumpTrace($client);
@@ -118,6 +119,7 @@ class CommandProcess
         } else { // hook called to perform a cleanup
             try {
                 $client->deleteRecord($this->loadedEnv['CERTBOT_DOMAIN'], $record);
+                $this->ioStyle->writeln("STATUS=cleanup-ok");
             } catch (\Exception $exception) {
                 $this->ioStyle->getErrorStyle()->error("Failed performing cleanup for domain {$this->loadedEnv['CERTBOT_DOMAIN']}. Error: {$exception->getMessage()}");
                 $this->dumpTrace($client);
