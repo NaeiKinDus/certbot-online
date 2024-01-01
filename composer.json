@@ -22,7 +22,8 @@
     "ext-phar": "*",
     "symfony/console": "^6.3",
     "symfony/http-client": "^6.3",
-    "symfony/dotenv": "^6.3"
+    "symfony/dotenv": "^6.3",
+    "symfony/process": "^7.0"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest"

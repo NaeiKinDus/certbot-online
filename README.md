@@ -21,6 +21,7 @@ The generated binary is a PHP Phar archive so you will need the following on you
 - PHAR support (which should be enabled by default),
 - PHP 8.2+,
 - cURL and JSON extensions for PHP,
+- the `dig` binary to perform DNS propagation checks,
 - [Certbot](https://certbot.eff.org/).
 
 ***For development only***

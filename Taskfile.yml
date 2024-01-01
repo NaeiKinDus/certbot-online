@@ -57,6 +57,8 @@ tasks:
       - ./main.php
       - echo "switching to deletion mode in 3s..."
       - sleep 3
-      - CERTBOT_AUTH_OUTPUT= ./main.php
+      - CERTBOT_AUTH_OUTPUT=some_meaningless_data ./main.php
     env:
-      CERTBOT_VALIDATION: somerandomstringorisit
+      GET_TRACES: 1
+      CERTBOT_VALIDATION:
+        sh: cat /proc/sys/kernel/random/uuid

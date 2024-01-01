@@ -32,7 +32,7 @@ class OnlineClient
     protected static array $instances = [];
     protected HttpClientInterface $client;
     /** @var string[] */
-    private array $traces;
+    private array $traces = [];
 
     /**
      * @throws RuntimeException when a required environment variable is missing
