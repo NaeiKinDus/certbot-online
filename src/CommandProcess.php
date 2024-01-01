@@ -28,7 +28,8 @@ class CommandProcess
     ];
     public const ADDITIONAL_ENV = [
         'CERTBOT_AUTH_OUTPUT',
-        'CHALLENGE_TTL'
+        'CHALLENGE_TTL',
+        'GET_TRACES'
     ];
     public const CHALLENGE_RECORD_NAME = '_acme-challenge';
     protected array $loadedEnv = [];
@@ -99,7 +100,7 @@ class CommandProcess
      */
     public function process(): int
     {
-        $client = OnlineClient::getInstance($this->loadedEnv[self::API_ENV_NAME]);
+        $client = OnlineClient::getInstance($this->loadedEnv[self::API_ENV_NAME], (bool)$this->loadedEnv['GET_TRACES']);
         $record = new ResourceRecord();
         $record->name = self::CHALLENGE_RECORD_NAME;
         $record->type = 'TXT';
@@ -111,6 +112,7 @@ class CommandProcess
                 $client->addRecord($this->loadedEnv['CERTBOT_DOMAIN'], $record);
             } catch (\Exception $exception) {
                 $this->ioStyle->getErrorStyle()->error("Failed creating challenge record for domain {$this->loadedEnv['CERTBOT_DOMAIN']}. Error: {$exception->getMessage()}");
+                $this->dumpTrace($client);
                 return 1;
             }
         } else { // hook called to perform a cleanup
@@ -118,10 +120,19 @@ class CommandProcess
                 $client->deleteRecord($this->loadedEnv['CERTBOT_DOMAIN'], $record);
             } catch (\Exception $exception) {
                 $this->ioStyle->getErrorStyle()->error("Failed performing cleanup for domain {$this->loadedEnv['CERTBOT_DOMAIN']}. Error: {$exception->getMessage()}");
+                $this->dumpTrace($client);
                 return 2;
             }
         }
 
+        $this->dumpTrace($client);
         return 0;
+    }
+
+    private function dumpTrace(OnlineClient $client): void
+    {
+        if ($this->loadedEnv['GET_TRACES']) {
+            $this->ioStyle->info(implode("\n", $client->getTraces()));
+        }
     }
 }

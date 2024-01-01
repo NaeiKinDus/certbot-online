@@ -31,12 +31,15 @@ class OnlineClient
     /** @var OnlineClient[] */
     protected static array $instances = [];
     protected HttpClientInterface $client;
+    /** @var string[] */
+    private array $traces;
 
     /**
      * @throws RuntimeException when a required environment variable is missing
      */
     protected function __construct(
-        #[SensitiveParameter] protected string $apiToken
+        #[SensitiveParameter] protected string $apiToken,
+        private readonly bool $trace = false
     ) {
         $this->client = new RetryableHttpClient(
             HttpClient::create(
@@ -52,12 +55,13 @@ class OnlineClient
 
     /**
      * @param string $apiKey
+     * @param bool $trace
      * @return OnlineClient
      */
-    public static function getInstance(#[SensitiveParameter] string $apiKey): OnlineClient
+    public static function getInstance(#[SensitiveParameter] string $apiKey, bool $trace = false): OnlineClient
     {
         if (empty(self::$instances[$apiKey])) {
-            self::$instances[$apiKey] = new OnlineClient($apiKey);
+            self::$instances[$apiKey] = new OnlineClient($apiKey, $trace);
         }
 
         return self::$instances[$apiKey];
@@ -99,6 +103,28 @@ class OnlineClient
     }
 
     /**
+     * Retrieve generated traces for debugging purposes
+     * @return string[]
+     */
+    final public function getTraces(): array
+    {
+        return $this->traces;
+    }
+
+    /**
+     * Add a new trace if trace collection is enabled
+     *
+     * @param string $traceLog
+     * @return void
+     */
+    final protected function addTrace(string $traceLog): void
+    {
+        if ($this->trace) {
+            $this->traces[] = $traceLog;
+        }
+    }
+
+    /**
      * Alter an RRSet on the active version
      *
      * @param string $domainName
@@ -119,14 +145,23 @@ class OnlineClient
             'changeType' => $operationType->value,
             'records' => $rrSet ? array_merge($rrSet, [$record]) : [$record]
         ];
-        $response = $this->client->request('PATCH', self::API_ENDPOINT . "/domain/$domainName/version/active", ['json' => [$payload]]);
+        $this->addTrace('Payload: ' . json_encode($payload));
+        $this->addTrace('Method: PATCH');
+        $this->addTrace('URI: ' . self::API_ENDPOINT . "/domain/$domainName/version/active");
+        $response = $this->client->request(
+            'PATCH', self::API_ENDPOINT . "/domain/$domainName/version/active", ['json' => [$payload]]
+        );
         $statusCode = $response->getStatusCode();
+        $this->addTrace('HTTP response code: ' . $statusCode);
         $data = null;
         if ($statusCode !== 204) {
             $data = $response->toArray(false);
+            $this->addTrace('Response content: ' . json_encode($data));
         }
         if (200 > $statusCode || 300 <= $statusCode) {
+            $this->addTrace('Final operation status: NOK');
             throw new RuntimeException("Error while performing the '$operationType->value' operation on the active version (code: $statusCode): {$data['error']}");
         }
+        $this->addTrace('Final operation status: OK');
     }
 }

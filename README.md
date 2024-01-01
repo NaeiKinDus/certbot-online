@@ -28,7 +28,7 @@ The generated binary is a PHP Phar archive so you will need the following on you
 - [go-task](https://github.com/go-task/task), while not a requirement, strongly recommended.
 
 #### From Github releases
-Not yet available, will come at a later date.
+Check the releases section and download the latest asset available.
 
 #### From the source
 ```shell
@@ -44,15 +44,25 @@ scp bin/certbot-online.phar you@your-machine:~/
 ```
 
 ### Usage
+First, you need to generate a secret API token on the Online Console and then save it in a `.env` file
+(use the provided `.env.dist` file as a template, available in the Github repository).
+This file may reside in any of the following paths:
+- the script user's $HOME,
+- '<project_root>/' if you are in a development environment and using the Git source,
+- in the same directory where the script is located,
+- in the current working directory where user is located when starting the script.
+
 ***Generating certificates***
 ```shell
 # Obtaining or renewing a basic certificate
-certbot certonly -n --manual --manual-auth-hook certbot-online.phar --manual-cleanup-hook certbot-online.phar \
+certbot certonly -n \
+  --manual --manual-auth-hook certbot-online.phar --manual-cleanup-hook certbot-online.phar \
   --agree-tos --email <YOUR_EMAIL> --preferred-challenges dns \
   -d <YOUR_DOMAIN_NAME>
   
 # Obtaining or renewing a wildcard certificate with OCSP stapling and HSTS
-certbot certonly -n --manual --manual-auth-hook certbot-online.phar --manual-cleanup-hook certbot-online.phar \
+certbot certonly -n \
+  --manual --manual-auth-hook certbot-online.phar --manual-cleanup-hook certbot-online.phar \
   --hsts --must-staple --agree-tos --email <YOUR_EMAIL> --preferred-challenges dns \
   -d \*.<YOUR_DOMAIN_NAME>
 ```
