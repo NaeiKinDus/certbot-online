@@ -1,5 +1,6 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg?style=for-the-badge)](CODE_OF_CONDUCT.md)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](LICENSE)
+![Certbot](https://img.shields.io/badge/Tested%20With%20Certbot-2.8.0-4baaaa.svg?style=for-the-badge&logo=letsencrypt)
 
 Online Certbot Hook
 ===================
